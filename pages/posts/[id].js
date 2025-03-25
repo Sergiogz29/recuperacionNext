@@ -1,27 +1,22 @@
-// pages/posts/[id].js
-// Muestra el detalle de un Post, su autor y sus comentarios
 import Link from 'next/link';
 
 export default function PostDetail({ post, user, comments }) {
   return (
     <div className="container">
-      {/* Enlace para volver a la página principal */}
-      <Link href="/">
-        <a>← Volver</a>
-      </Link>
+      {/* Enlace para volver a la página principal (sin <a> interno) */}
+      <Link href="/">← Volver</Link>
 
-      {/* Título y cuerpo del Post */}
       <h1>{post.title}</h1>
       <p>{post.body}</p>
 
-      {/* Información del autor */}
       <section>
         <h2>Autor</h2>
-        <p><strong>{user.name}</strong></p>
+        <p>
+          <strong>{user.name}</strong>
+        </p>
         <p>Email: {user.email}</p>
       </section>
 
-      {/* Lista de comentarios */}
       <section>
         <h2>Comentarios</h2>
         {comments.map((comment) => (
@@ -52,19 +47,18 @@ export default function PostDetail({ post, user, comments }) {
   );
 }
 
-// Obtiene los datos necesarios para el post
 export async function getServerSideProps({ params }) {
   const { id } = params;
 
-  // Post
+  // Obtiene la información del post
   const resPost = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
   const post = await resPost.json();
 
-  // Usuario (autor del post)
+  // Obtiene la información del usuario (autor del post)
   const resUser = await fetch(`https://jsonplaceholder.typicode.com/users/${post.userId}`);
   const user = await resUser.json();
 
-  // Comentarios
+  // Obtiene los comentarios asociados al post
   const resComments = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}/comments`);
   const comments = await resComments.json();
 

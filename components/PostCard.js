@@ -1,5 +1,6 @@
 // components/PostCard.js
 // Componente que muestra una "tarjeta" de información de un Post
+
 import Link from 'next/link';
 
 export default function PostCard({ post }) {
@@ -11,9 +12,9 @@ export default function PostCard({ post }) {
       {/* Extracto del cuerpo del post */}
       <p>{post.body.slice(0, 100)}...</p>
 
-      {/* Enlace a la página de detalle del post */}
+      {/* Enlace a la página de detalle del post (sin <a> interno) */}
       <Link href={`/posts/${post.id}`}>
-        <a>Leer más</a>
+        Leer más
       </Link>
 
       <style jsx>{`

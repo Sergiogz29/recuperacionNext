@@ -1,7 +1,9 @@
+// next.config.js
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Esto le dice a Next que, cuando hagas `next build`, genere la versión estática en la carpeta `out/`
-  output: "export"
+  // Esto indica que, al hacer `next build`, Next generará la versión estática en `out/`
+  output: "export",
 };
 
 module.exports = nextConfig;

@@ -1,71 +1,85 @@
 pipeline {
     agent any
 
-    // 1) Dispara este pipeline automáticamente al hacer push a la rama main
     triggers {
-        githubPush()
+        githubPush()  // Dispara la ejecución al hacer push en GitHub (main)
     }
 
     environment {
-        // Ruta donde Nginx leerá los archivos estáticos
+        // Ruta donde Nginx servirá el contenido final:
         DEPLOY_PATH = "/var/www/html/recuperacionNext"
-        // Carpeta generada por next export
-        BUILD_DIR   = "out"
-        // Directorio de trabajo de este job en Jenkins
-        WORKSPACE_DIR = "/var/lib/jenkins/workspace/${env.JOB_NAME}"
+        // Carpeta generada por `next export`
+        BUILD_DIR = "out"
+        // Variable de workspace de Jenkins; no la usamos dentro del script shell con sudo
+        WORKSPACE_DIR = "${env.WORKSPACE}"
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Limpia por completo el workspace antes de cada build
-                deleteDir()
-                // Clona el repositorio en el directorio de trabajo
-                git branch: 'main', url: 'https://github.com/Sergiogz29/recuperacionNext.git'
-            }
-        }
-
-        stage('Install & Build') {
-            steps {
-                // Entra a la carpeta raíz (ya estamos en WORKSPACE)
-                dir("${WORKSPACE_DIR}") {
-                    // Ejecuta npm install y npm run build (output: export)
-                    sh '''
-                      echo "📦 Instalando dependencias..."
-                      npm install
-
-                      echo "⚙️ Ejecutando build y export estático..."
-                      npm run build
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy to Nginx') {
+        stage('Preparar Workspace') {
             steps {
                 script {
-                    // Si la carpeta DEPLOY_PATH existe, la borramos y la volvemos a crear vacía
+                    // Por si acaso quedan restos de compilaciones anteriores:
                     sh """
-                      echo "🚚 Desplegando en ${DEPLOY_PATH}..."
-                      # Borrar (si existiera) el directorio entero
-                      sudo rm -rf ${DEPLOY_PATH}
-                      # Crear la carpeta nuevamente vacía
-                      sudo mkdir -p ${DEPLOY_PATH}
+                      echo "🔐 Corrigiendo permisos del workspace..."
+                      sudo chown -R jenkins:jenkins "${WORKSPACE_DIR}" || true
+                      sudo chmod -R u+rwX "${WORKSPACE_DIR}" || true
 
-                      # Copiar todo el contenido de out/ a DEPLOY_PATH
-                      sudo cp -r ${BUILD_DIR}/* ${DEPLOY_PATH}/
-
-                      # Ajustar permisos: www-data:www-data (usuario que corre Nginx)
-                      sudo chown -R www-data:www-data ${DEPLOY_PATH}
-                      sudo chmod -R 755 ${DEPLOY_PATH}
+                      echo "🧹 Limpiando el workspace..."
+                      rm -rf *
                     """
                 }
             }
         }
 
-        stage('Reload Nginx') {
+        stage('Clonar Repo') {
             steps {
-                // Recarga la configuración de Nginx para servir los nuevos archivos
+                git branch: 'main', url: 'https://github.com/Sergiogz29/recuperacionNext.git'
+            }
+        }
+
+        stage('Instalar dependencias y Build') {
+            steps {
+                sh """
+                  echo "📦 Instalando dependencias..."
+                  npm install
+
+                  echo "⚙️ Ejecutando build y export con Next.js..."
+                  npm run build    || { echo "❌ Error en npm run build"; exit 1; }
+                  npm run export   || { echo "❌ Error en npm run export"; exit 1; }
+
+                  echo "✅ Build + Export completados"
+                """
+            }
+        }
+
+        stage('Desplegar en Nginx') {
+            steps {
+                script {
+                    if (fileExists("${BUILD_DIR}/index.html")) {
+                        sh """
+                          echo "🚚 Desplegando en ${DEPLOY_PATH}..."
+                          # Limpia la carpeta de despliegue
+                          sudo rm -rf ${DEPLOY_PATH}/*
+
+                          # Crea la carpeta si no existe
+                          sudo mkdir -p ${DEPLOY_PATH}
+
+                          # Copia todos los archivos generados a la carpeta de Nginx
+                          sudo cp -r ${BUILD_DIR}/* ${DEPLOY_PATH}/
+
+                          # Ajusta permisos
+                          sudo chown -R www-data:www-data ${DEPLOY_PATH}
+                          sudo chmod -R 755 ${DEPLOY_PATH}
+                        """
+                    } else {
+                        error "❌ No se encontró ${BUILD_DIR}/index.html. El export probablemente falló."
+                    }
+                }
+            }
+        }
+
+        stage('Reiniciar Nginx') {
+            steps {
                 sh 'sudo systemctl reload nginx || sudo service nginx reload'
             }
         }
@@ -76,7 +90,7 @@ pipeline {
             echo '✅ ¡Despliegue exitoso!'
         }
         failure {
-            echo '❌ El despliegue falló. Revisa los logs de Jenkins para más detalles.'
+            echo '❌ El despliegue falló. Revisa los logs en Jenkins.'
         }
     }
 }

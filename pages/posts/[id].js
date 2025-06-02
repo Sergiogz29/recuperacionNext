@@ -1,12 +1,11 @@
-// pages/posts/[id].js
-
 import Link from 'next/link';
 
 export default function PostDetail({ post, user, comments }) {
   return (
     <div className="container">
-      {/* Enlace para volver a la página principal */}
-      <Link href="/">← Volver</Link>
+      <Link href="/">
+        <a>← Volver al listado</a>
+      </Link>
 
       <h1>{post.title}</h1>
       <p>{post.body}</p>
@@ -14,9 +13,8 @@ export default function PostDetail({ post, user, comments }) {
       <section>
         <h2>Autor</h2>
         <p>
-          <strong>{user.name}</strong>
+          <strong>{user.name}</strong> ({user.email})
         </p>
-        <p>Email: {user.email}</p>
       </section>
 
       <section>
@@ -33,7 +31,16 @@ export default function PostDetail({ post, user, comments }) {
 
       <style jsx>{`
         .container {
-          padding: 2rem;
+          max-width: 800px;
+          margin: 2rem auto;
+          font-family: Arial, sans-serif;
+        }
+        a {
+          text-decoration: none;
+          color: #0070f3;
+        }
+        h1 {
+          margin-top: 1rem;
         }
         section {
           margin-top: 2rem;
@@ -49,42 +56,36 @@ export default function PostDetail({ post, user, comments }) {
   );
 }
 
-// 1) getStaticPaths: genera un array de paths con cada ID de post
+// Genera rutas dinámicas en build time
 export async function getStaticPaths() {
-  // Recupera la lista de posts (100 posts de jsonplaceholder)
-  const res = await fetch('https://jsonplaceholder.typicode.com/posts');
-  const posts = await res.json();
+  const resPosts = await fetch('https://jsonplaceholder.typicode.com/posts');
+  const posts = await resPosts.json();
 
-  // Genera un array de objetos { params: { id: '1' }, params: { id: '2' }, ... }
   const paths = posts.map((post) => ({
-    params: { id: post.id.toString() },
+    params: { id: String(post.id) },
   }));
 
   return {
     paths,
-    // fallback: false => cualquier ruta distinta a las generadas dará 404
     fallback: false,
   };
 }
 
-// 2) getStaticProps: para cada id,  
-//    genera en build las props necesarias: post, user y comments
+// Trae datos en build time para cada post
 export async function getStaticProps({ params }) {
   const { id } = params;
 
-  // Obtiene los datos del post
-  const resPost = await fetch(
-    `https://jsonplaceholder.typicode.com/posts/${id}`
-  );
+  // Datos del post
+  const resPost = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
   const post = await resPost.json();
 
-  // Obtiene los datos del usuario (autor)
+  // Datos del autor (usuario)
   const resUser = await fetch(
     `https://jsonplaceholder.typicode.com/users/${post.userId}`
   );
   const user = await resUser.json();
 
-  // Obtiene los comentarios del post
+  // Comentarios del post
   const resComments = await fetch(
     `https://jsonplaceholder.typicode.com/posts/${id}/comments`
   );

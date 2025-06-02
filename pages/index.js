@@ -1,44 +1,58 @@
-// pages/index.js
-// Página principal que muestra 10 posts aleatorios
-import PostCard from '../components/PostCard';
+import Link from 'next/link';
 
 export default function Home({ posts }) {
   return (
     <div className="container">
-      <h1>Posts Aleatorios</h1>
-
-      {/* Grid con tarjetas de Post */}
-      <div className="posts-grid">
+      <h1>Listado de Posts</h1>
+      <ul>
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <li key={post.id}>
+            <Link href={`/posts/${post.id}`}>
+              <a>{post.title}</a>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
 
       <style jsx>{`
         .container {
-          padding: 2rem;
+          max-width: 800px;
+          margin: 2rem auto;
+          font-family: Arial, sans-serif;
         }
-        .posts-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 1rem;
+        h1 {
+          text-align: center;
+          margin-bottom: 2rem;
+        }
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+        li {
+          margin-bottom: 1rem;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 0.5rem;
+        }
+        a {
+          text-decoration: none;
+          color: #0070f3;
+        }
+        a:hover {
+          text-decoration: underline;
         }
       `}</style>
     </div>
   );
 }
 
-// Esta función se ejecuta en el servidor en cada request
-export async function getServerSideProps() {
-  // Obtener todos los posts desde JSONPlaceholder
+// Usa SSG: getStaticProps en vez de getServerSideProps
+export async function getStaticProps() {
   const res = await fetch('https://jsonplaceholder.typicode.com/posts');
-  const allPosts = await res.json();
-
-  // Selecciona 10 posts aleatorios
-  const shuffled = allPosts.sort(() => 0.5 - Math.random());
-  const posts = shuffled.slice(0, 10);
+  const posts = await res.json();
 
   return {
-    props: { posts }
+    props: {
+      posts,
+    },
   };
 }

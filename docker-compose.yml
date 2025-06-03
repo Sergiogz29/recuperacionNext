@@ -1,29 +1,35 @@
-# --------------------------------------------------------
-# docker-compose.yml
-# --------------------------------------------------------
 version: '3.8'
 
 services:
-  jenkins:
-    build:
-      context: .
-      dockerfile: Dockerfile.jenkins
-    container_name: jenkins-server
-    ports:
-      - "8080:8080"   # Jenkins UI
-      - "50000:50000" # Agentes remotos 
-    volumes:
-      - jenkins_home:/var/jenkins_home
-    restart: unless-stopped
-    # Expone las variables necesarias para que el contenedor Jenkins ejecute npm, git, etc.
-
+  # --------------------------------------------------------------
+  # Servicio “app”: toma tu Next.js, construye la versión estática
+  # con Node y la sirve por Nginx en el puerto 80 del host.
+  # --------------------------------------------------------------
   app:
     build:
       context: .
       dockerfile: Dockerfile.app
-    container_name: nextjs-nginx
+    image: recuperacionnext-app:latest
+    container_name: recuperacionnext-app
     ports:
-      - "80:80"   # Exponer la app Next.js en el host en el puerto 80
+      - "80:80"             # Expone la APP Next.js en puerto 80 del host
+    restart: unless-stopped
+
+  # --------------------------------------------------------------
+  # Servicio “jenkins”: crea la imagen de Jenkins con plugins,
+  # monta volumen persistente y expone puertos 8080 y 50000.
+  # --------------------------------------------------------------
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    image: recuperacionnext-jenkins:latest
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
     restart: unless-stopped
 
 volumes:

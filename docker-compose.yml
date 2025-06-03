@@ -11,7 +11,7 @@ services:
     container_name: jenkins-server
     ports:
       - "8080:8080"   # Jenkins UI
-      - "50000:50000" # Agentes remotos (si los usas)
+      - "50000:50000" # Agentes remotos 
     volumes:
       - jenkins_home:/var/jenkins_home
     restart: unless-stopped

@@ -1,18 +1,12 @@
 {
   "name": "recuperacionNext",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Proyecto Next.js con export estático y pipeline Jenkins",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "export": "next export",
-    "start": "next start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "next start"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "next": "latest",
     "react": "latest",

@@ -1,0 +1,31 @@
+# --------------------------------------------------------
+# docker-compose.yml
+# --------------------------------------------------------
+version: '3.8'
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins-server
+    ports:
+      - "8080:8080"   # Jenkins UI
+      - "50000:50000" # Agentes remotos (si los usas)
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    restart: unless-stopped
+    # Expone las variables necesarias para que el contenedor Jenkins ejecute npm, git, etc.
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    container_name: nextjs-nginx
+    ports:
+      - "80:80"   # Exponer la app Next.js en el host en el puerto 80
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+    driver: local

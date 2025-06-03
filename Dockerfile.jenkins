@@ -1,0 +1,38 @@
+# --------------------------------------------------------
+# Dockerfile.jenkins
+# --------------------------------------------------------
+# Partimos de la imagen oficial de Jenkins LTS
+FROM jenkins/jenkins:lts
+
+# Cambiamos a user root para instalar paquetes
+USER root
+
+# 1) Instalamos las dependencias básicas: curl, gnupg (para Node.js), git
+RUN apt-get update && \
+    apt-get install -y curl gnupg2 git && \
+    rm -rf /var/lib/apt/lists/*
+
+# 2) Instalamos Node.js 18.x (para que tu pipeline npm install / npm run build funcione)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# 3) Pre-instalar plugins de Jenkins: git, pipeline, workflow, github, nodejs
+#    Creamos un archivo temporal con la lista de plugins:
+RUN echo "git"                           > /usr/share/jenkins/ref/plugins.txt && \
+    echo "pipeline-github-lib@2.12"      >> /usr/share/jenkins/ref/plugins.txt && \
+    echo "workflow-aggregator"           >> /usr/share/jenkins/ref/plugins.txt && \
+    echo "github-branch-source"          >> /usr/share/jenkins/ref/plugins.txt && \
+    echo "nodejs"                        >> /usr/share/jenkins/ref/plugins.txt
+
+# 4) Instalamos esos plugins automáticamente en la primera ejecución de Jenkins
+RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
+
+# 5) Volvemos a user jenkins
+USER jenkins
+
+# Puerto expuesto por Jenkins
+EXPOSE 8080 50000
+
+# Al arrancar el contenedor, iniciará Jenkins (ya configurado con Node y Git)
+# No hace falta CMD explícito porque la imagen oficial jenkins/jenkins:lts ya trae ENTRYPOINT

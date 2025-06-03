@@ -3,35 +3,24 @@
 # Construye una imagen de Jenkins con plugins
 ###############################################
 
-# 1) Partimos de la imagen oficial (la “única” que trae jenkins-plugin-cli)
 FROM jenkins/jenkins:lts
 
 USER root
 
-# 2) Instalamos git, curl y sudo (opcional, pero conveniente)
+# Instala git, curl y sudo (los necesitamos dentro del contenedor)
 RUN apt-get update && \
     apt-get install -y git curl sudo && \
     rm -rf /var/lib/apt/lists/*
 
-# 3) Copiamos el listado de plugins al directorio adecuado
-#    Este archivo plugins.txt debe existir en tu repo (en la raíz):
-#      plugins.txt
+# Copia el listado de plugins a la ruta /usr/share/jenkins/ref/
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 
-# 4) Instalamos los plugins usando jenkins-plugin-cli (reemplaza install-plugins.sh)
-#    El comando jenkins-plugin-cli viene incluido en la imagen oficial de Jenkins
+# Instala plugins usando jenkins-plugin-cli (reemplaza install-plugins.sh)
 RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 
-# 5) Ajustamos permisos en /var/jenkins_home (para el usuario jenkins)
+# Asegura permisos
 RUN chown -R jenkins:jenkins /var/jenkins_home
 
-# 6) Volvemos a usuario “jenkins”
 USER jenkins
 
-# 7) Exponemos los puertos necesarios:
-#    * 8080 → interfaz web de Jenkins
-#    * 50000 → puertos para agentes
 EXPOSE 8080 50000
-
-# El ENTRYPOINT y CMD ya vienen definidos en la imagen base (jenkins/jenkins:lts),
-# así que no es necesario volver a declararlos aquí.

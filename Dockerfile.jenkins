@@ -7,18 +7,18 @@ FROM jenkins/jenkins:lts
 
 USER root
 
-# Instala git, curl y sudo (los necesitamos dentro del contenedor)
+# 1) Instalamos git, curl y sudo (opcional)
 RUN apt-get update && \
     apt-get install -y git curl sudo && \
     rm -rf /var/lib/apt/lists/*
 
-# Copia el listado de plugins a la ruta /usr/share/jenkins/ref/
+# 2) Copia el listado de plugins
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 
-# Instala plugins usando jenkins-plugin-cli (reemplaza install-plugins.sh)
+# 3) Instala plugins con jenkins-plugin-cli (nueva herramienta oficial)
 RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.txt
 
-# Asegura permisos
+# 4) Ajusta permisos
 RUN chown -R jenkins:jenkins /var/jenkins_home
 
 USER jenkins

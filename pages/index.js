@@ -5,7 +5,7 @@ import React from "react";
 export default function Home({ posts }) {
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "2rem" }}>
-      <h1>Listado de Posts</h1>
+      <h1>Listado de Posts de Sergio Garcia Zamora</h1>
       <ul style={{ listStyle: "none", padding: 0 }}>
         {posts.map((post) => (
           <li key={post.id} style={{ margin: "0.5rem 0" }}>
